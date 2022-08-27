@@ -38,10 +38,8 @@ def main():
     sys = fem.FEM()
     for x, y in node_pos:
         sys.add_node(fem.Node(x, y))
-    for s, e in elem_node[:6]:
-        sys.add_element(fem.Elem(sys.nodes[s], sys.nodes[e], r=0.5))
-    for s, e in elem_node[6:]:
-        sys.add_element(fem.Elem(sys.nodes[s], sys.nodes[e], r=0.5))
+    for s, e in elem_node:
+        sys.add_element(fem.Elem(sys.nodes[s], sys.nodes[e]))
     for i in range(4, 6):
         sys.add_fix(i)
 
