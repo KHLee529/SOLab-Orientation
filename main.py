@@ -2,8 +2,6 @@ import fem
 from scipy import optimize
 import numpy as np
 
-DEBUG = True
-
 
 class fem_opt:
 
@@ -50,13 +48,8 @@ def main():
     sys.F = F
     opt = fem_opt(sys)
 
-    if DEBUG:
-        print(sys.fix_nodes)
-        print("Q\n", sys.axis_displacement)
-
     x0 = (0.5, 0.5)
     bnds = ((0.001, 0.5), (0.001, 0.5))
-    #bnds = optimize.Bounds(lb=[0.001, 0.001], ub=[0.5, 0.5])
     cons = [
         optimize.NonlinearConstraint(opt.disp_cons, lb=-np.inf, ub=0.02),
     ] + [
