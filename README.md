@@ -18,11 +18,11 @@ It is recommended to use for isolating develop environment from other project.
 
 Still, `requirements.txt` is provided for ones using pip or other virtual environment for package management.
 
-- *pipenv*
+- **pipenv**
 	```shell
 	$ pipenv install
 	```
-- *pip*
+- **pip**
 	```shell
 	$ pip install -r requirements.txt
 	```
