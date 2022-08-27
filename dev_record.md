@@ -1,5 +1,8 @@
 # 10 Bar Truss Optimization Develop Record
 
+[![hackmd-github-sync-badge](https://hackmd.io/bmix-_hfTZe0s2yxhxKl_A/badge)](https://hackmd.io/bmix-_hfTZe0s2yxhxKl_A)
+
+
 本次作業使用 python 進行 10-Bar Truss Optimization 的程式實作，其中使用 python 的套件 scipy.optimize 進行最佳化，故並無進行最佳化演算法的實作。
 
 ## 目標
