@@ -2,6 +2,7 @@ from math import pi, sqrt, cos, sin
 import cmath
 import numpy as np
 from typing import Union, Optional
+from copy import copy
 
 
 class Coord:
@@ -100,7 +101,7 @@ class FEM:
     def __init__(self):
         self.nodes = []
         self.elems = []
-        self.fixs = []  # node indexes of fixed nodes
+        self.fix_nodes = []  # node indexes of fixed nodes
         self._F = None
 
     @property
@@ -109,10 +110,17 @@ class FEM:
         return self._F
 
     @F.setter
-    def set_force(self, F):
+    def F(self, F):
         assert len(F) == 2 * len(
             self.nodes), "Dimension of force applied doesn't match the number of nodes"
-        self.F = F
+        self._F = F
+
+    @property
+    def fix_axis(self):
+        ret = []
+        for n in self.fix_nodes:
+            ret += self.idx_n2a(n)
+        return ret
 
     def node_idx(self, a: Union[float, Node], b: Optional[float] = None):
         '''
@@ -135,6 +143,9 @@ class FEM:
         ''' Add element to the FEM instance '''
         if elem not in self.elems:
             self.elems.append(elem)
+
+    def add_fix(self, node_idx):
+        self.fix_nodes.append(node_idx)
 
     def idx_n2a(self, idx):
         ''' convert node index to axis index '''
@@ -171,8 +182,22 @@ class FEM:
     def axis_displacement(self):
         ''' displacement when force applied '''
         assert self.F, "Force are not applied"
-        k_inv = np.linalg.inv(self.k)
-        return np.dot(k_inv, self.F)
+        size = 2 * len(self.nodes)
+        k = copy(self.k)
+        F = copy(self.F)
+        idxes = np.array(range(size))
+
+        idxes = np.delete(idxes, self.fix_axis, None)
+        k = np.delete(k, self.fix_axis, 0)
+        k = np.delete(k, self.fix_axis, 1)
+        F = np.delete(F, self.fix_axis, 0)
+
+        k_inv = np.linalg.inv(k)
+        Q = np.dot(k_inv,F)
+        out = np.zeros(size)
+        for i, idx in zip(range(len(idxes)), idxes):
+            out[idx] = Q[i]
+        return out
 
     @property
     def node_displacement(self):
@@ -190,7 +215,7 @@ class FEM:
             e = self.elems[i]
             axis_idxs = self.axis_idx_of_elem(i)
             disp = np.array([self.axis_displacement[i] for i in axis_idxs])
-            s = e.E / e.L * np.dot(disp, e.trans_mat)
+            s = e.E / e.L * np.dot(e.trans_mat, disp)
             stress.append(s)
         return stress
 
@@ -200,7 +225,7 @@ class FEM:
 
     def over_loading(self):
         strs = self.stress
-        return all([strs[i] < self.elems[i].sy for i in range(len(self.elems))])
+        return np.array([abs(strs[i]) - self.elems[i].sy for i in range(len(self.elems))])
 
     def set_elem_rad(self, elem_idx, radius):
         self.elems[elem_idx].r = radius
