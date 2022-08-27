@@ -54,16 +54,17 @@ def main():
         print(sys.fix_nodes)
         print("Q\n", sys.axis_displacement)
 
+    x0 = (0.5, 0.5)
+    bnds = ((0.001, 0.5), (0.001, 0.5))
+    #bnds = optimize.Bounds(lb=[0.001, 0.001], ub=[0.5, 0.5])
     cons = [
         optimize.NonlinearConstraint(opt.disp_cons, lb=-np.inf, ub=0.02),
-        optimize.NonlinearConstraint(lambda x: x[0], lb=0.001, ub=0.5),
-        optimize.NonlinearConstraint(lambda x: x[1], lb=0.001, ub=0.5)
     ] + [
         optimize.NonlinearConstraint(lambda x: opt.stress_cons(x)[i], lb=-np.inf, ub=0)
         for i in range(len(sys.elems))
     ]
 
-    res = optimize.minimize(opt.obj_func, (0.5, 0.5), method='SLSQP', constraints=cons)
+    res = optimize.minimize(opt.obj_func, x0, method='SLSQP', bounds=bnds, constraints=cons)
     print(res)
 
 

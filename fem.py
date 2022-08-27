@@ -4,6 +4,10 @@ import numpy as np
 from typing import Union, Optional
 from copy import copy
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 class Coord:
     """ Implementation of coordinate operation """
@@ -47,7 +51,7 @@ class Coord:
         return hash(self._val)
 
     def __abs__(self):
-        return self.polar[0]
+        return abs(self._val)
 
 
 class Node(Coord):
@@ -145,17 +149,18 @@ class FEM:
             self.elems.append(elem)
 
     def add_fix(self, node_idx):
-        self.fix_nodes.append(node_idx)
+        if node_idx not in self.fix_nodes:
+            self.fix_nodes.append(node_idx)
 
     def idx_n2a(self, idx):
         ''' convert node index to axis index '''
-        assert idx < len(self.nodes)
+        assert idx < len(self.nodes), f"{idx} is out of node indexes"
         return [2 * idx, 2 * idx + 1]
 
     def node_idx_of_elem(self, elem_idx):
         ''' Get the indexes of nodes (start & end) of the elements with given index '''
         idx = elem_idx
-        return [self.node_idx(i.x, i.y) for i in [self.elems[idx].ps, self.elems[idx].pe]]
+        return [self.node_idx(node) for node in [self.elems[idx].ps, self.elems[idx].pe]]
 
     def axis_idx_of_elem(self, elem_idx):
         ''' Get the indexes of axis of nodes (start & end) of the elements with given index '''
@@ -168,9 +173,9 @@ class FEM:
         ''' Stiffness matrix of the whole system '''
         size = 2 * len(self.nodes)
         k = np.zeros((size, size))
+
         for i in range(len(self.elems)):
             elem = self.elems[i]
-            elem_k = elem.k
             axis_idxs = self.axis_idx_of_elem(i)
             l = len(axis_idxs)
             for r in range(l):
@@ -180,7 +185,7 @@ class FEM:
 
     @property
     def axis_displacement(self):
-        ''' displacement when force applied '''
+        ''' displacement of every axis when force applied '''
         assert self.F, "Force are not applied"
         size = 2 * len(self.nodes)
         k = copy(self.k)
@@ -203,8 +208,8 @@ class FEM:
     def node_displacement(self):
         a_disp = self.axis_displacement
         disp = np.zeros(len(self.nodes))
-        for i in range(len(disp)):
-            disp[i] = sqrt(a_disp[2 * i]**2 + a_disp[2 * i + 1]**2)
+        for i , val in zip(range(len(disp)), chunks(a_disp, 2)):
+            disp[i] = abs(complex(*val))
         return disp
 
     @property
@@ -224,6 +229,7 @@ class FEM:
         return sum([e.dens * e.A * e.L for e in self.elems])
 
     def over_loading(self):
+        ''' difference between applied stress and yielding stress for all elements '''
         strs = self.stress
         return np.array([abs(strs[i]) - self.elems[i].sy for i in range(len(self.elems))])
 
