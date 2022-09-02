@@ -216,10 +216,11 @@ class FEM:
     def stress(self):
         ''' stress of each elements when force applied '''
         stress = []
+        axis_displacement = self.axis_displacement
         for i in range(len(self.elems)):
             e = self.elems[i]
             axis_idxs = self.axis_idx_of_elem(i)
-            disp = np.array([self.axis_displacement[i] for i in axis_idxs])
+            disp = np.array([axis_displacement[i] for i in axis_idxs])
             s = e.E / e.L * np.dot(e.trans_mat, disp)
             stress.append(s)
         return stress

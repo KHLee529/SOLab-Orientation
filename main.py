@@ -23,11 +23,14 @@ class fem_opt:
 
     def disp_cons(self, x):
         self.set_rad(*x)
-        return self.sys.node_displacement[1]
+        return self.sys.node_displacement[1] - 0.02
 
     def stress_cons(self, x):
         self.set_rad(*x)
         return self.sys.over_loading()
+
+    def total_cons(self, x):
+        return [self.disp_cons(x), *(self.stress_cons(x).flatten().tolist())]
 
 
 def main():
@@ -48,12 +51,7 @@ def main():
 
     x0 = (0.5, 0.5)
     bnds = ((0.001, 0.5), (0.001, 0.5))
-    cons = [
-        optimize.NonlinearConstraint(opt.disp_cons, lb=-np.inf, ub=0.02),
-    ] + [
-        optimize.NonlinearConstraint(lambda x: opt.stress_cons(x)[i], lb=-np.inf, ub=0)
-        for i in range(len(sys.elems))
-    ]
+    cons = [ optimize.NonlinearConstraint(opt.total_cons, lb=-np.inf, ub=0)]
 
     res = optimize.minimize(opt.obj_func, x0, method='SLSQP', bounds=bnds, constraints=cons)
     print(res)
